@@ -47,3 +47,12 @@ pre-entrega-automation-testing-alosmary-hernandez/
 ├── requirements.txt
 ├── README.md
 └── .gitignore
+
+
+## Instalación del proyecto
+
+Clonar el repositorio:
+
+```bash
+git clone https://github.com/Alosmary/pre-entrega-automation-testing-alosmary-hernandez.git
+````md
