@@ -1,149 +1,317 @@
-# Pre-entrega Automation Testing - SauceDemo
+# Proyecto Final - Automation Testing
 
-## Propósito del proyecto
+## Descripción
 
-Este proyecto corresponde a la pre-entrega del curso de Automation Testing.
+Este proyecto corresponde al Trabajo Final Integrador del curso de Automatización de Pruebas.
 
-El objetivo es automatizar flujos básicos de navegación web utilizando Selenium WebDriver con Python, aplicando buenas prácticas de testing como organización de tests, uso de fixtures, funciones auxiliares y generación de reportes HTML.
+El objetivo es implementar un framework de testing automatizado en Python que permita validar funcionalidades de interfaz de usuario y servicios API de forma organizada, mantenible y reutilizable.
 
-El sitio utilizado para las pruebas es:
+El framework utiliza Selenium WebDriver para pruebas UI, Requests para pruebas API, Pytest como framework de ejecución y el patrón Page Object Model para separar la lógica de interacción con la aplicación de la lógica de validación de los tests.
 
-https://www.saucedemo.com/
+---
+
+## Sitio y APIs utilizadas
+
+### Sitio web UI
+
+* SauceDemo
+* URL: https://www.saucedemo.com/
+
+### API pública
+
+* JSONPlaceholder
+* URL base: https://jsonplaceholder.typicode.com
+
+---
 
 ## Tecnologías utilizadas
 
-- Python
-- Selenium WebDriver
-- Pytest
-- Pytest HTML
-- Git
-- GitHub
+* Python
+* Pytest
+* Selenium WebDriver
+* Requests
+* Page Object Model
+* pytest-html
+* CSV para datos externos
+* Logging
+* Git
+* GitHub
 
-## Flujos automatizados
-
-El proyecto incluye la automatización de los siguientes casos:
-
-1. Login exitoso con usuario válido.
-2. Validación del catálogo de productos.
-3. Agregado de producto al carrito y validación del ítem agregado.
+---
 
 ## Estructura del proyecto
 
 ```text
-pre-entrega-automation-testing-alosmary-hernandez/
+proyecto-final-automation-testing-alosmary-hernandez/
 │
-├── tests/
-│   └── test_saucedemo.py
+├── data/
+│   └── login_data.csv
 │
-├── utils/
+├── logs/
+│   └── suite.log
+│
+├── pages/
 │   ├── __init__.py
-│   └── helpers.py
+│   ├── login_page.py
+│   ├── inventory_page.py
+│   ├── cart_page.py
+│   └── checkout_page.py
 │
 ├── reports/
 │   ├── assets/
 │   ├── screenshots/
 │   └── reporte.html
 │
+├── tests/
+│   ├── test_saucedemo.py
+│   └── test_api.py
+│
+├── utils/
+│   ├── __init__.py
+│   ├── helpers.py
+│   └── logger.py
+│
 ├── conftest.py
+├── pytest.ini
 ├── requirements.txt
 ├── README.md
 └── .gitignore
 ```
 
+---
+
+## Casos automatizados
+
+### Pruebas UI
+
+El proyecto incluye pruebas automatizadas sobre SauceDemo.
+
+Casos principales:
+
+1. Login exitoso.
+2. Validación del catálogo de productos.
+3. Agregar producto al carrito.
+4. Visualizar producto agregado en el carrito.
+5. Remover producto del carrito.
+6. Login parametrizado desde archivo CSV.
+7. Checkout completo end-to-end.
+
+### Pruebas API
+
+El proyecto incluye pruebas automatizadas sobre JSONPlaceholder.
+
+Casos principales:
+
+1. GET de un post por ID.
+2. POST para crear un recurso.
+3. DELETE para eliminar un recurso.
+
+---
+
+## Datos externos
+
+El proyecto utiliza un archivo CSV para ejecutar pruebas parametrizadas de login.
+
+Ruta:
+
+```text
+data/login_data.csv
+```
+
+Ejemplo de datos:
+
+```csv
+usuario,clave,debe_funcionar
+standard_user,secret_sauce,true
+locked_out_user,secret_sauce,false
+usuario_invalido,clave_invalida,false
+```
+
+Estos datos son leídos desde `utils/helpers.py` mediante la función `leer_csv_login()` y utilizados con `pytest.mark.parametrize`.
+
+---
+
 ## Instalación del proyecto
 
-Clonar el repositorio:
+### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/Alosmary/pre-entrega-automation-testing-alosmary-hernandez.git
+git clone URL_DEL_REPOSITORIO
 ```
 
-Ingresar a la carpeta del proyecto:
+### 2. Ingresar al proyecto
 
 ```bash
-cd pre-entrega-automation-testing-alosmary-hernandez
+cd proyecto-final-automation-testing-alosmary-hernandez
 ```
 
-Crear un entorno virtual:
+### 3. Crear entorno virtual
 
 ```bash
 python -m venv .venv
 ```
 
-Activar el entorno virtual en Windows:
+### 4. Activar entorno virtual en Windows
 
 ```bash
 .venv\Scripts\activate
 ```
 
-Instalar dependencias:
+### 5. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## Ejecución de pruebas
 
-Para ejecutar los tests desde la raíz del proyecto:
+### Ejecutar todas las pruebas
 
 ```bash
-pytest tests/test_saucedemo.py -v
+pytest
 ```
 
-## Generar reporte HTML
-
-Para ejecutar las pruebas y generar el reporte HTML:
+### Ejecutar todas las pruebas con reporte HTML
 
 ```bash
-pytest tests/test_saucedemo.py -v --html=reports/reporte.html
+pytest --html=reports/reporte.html --self-contained-html
 ```
 
-El reporte se genera en:
+### Ejecutar solo pruebas UI
+
+```bash
+pytest -m ui
+```
+
+### Ejecutar solo pruebas API
+
+```bash
+pytest -m api
+```
+
+### Ejecutar solo pruebas E2E
+
+```bash
+pytest -m e2e
+```
+
+---
+
+## Reporte HTML
+
+El proyecto genera un reporte HTML utilizando `pytest-html`.
+
+Ruta del reporte:
 
 ```text
 reports/reporte.html
 ```
 
-## Evidencias
+El reporte permite visualizar:
 
-El proyecto cuenta con generación automática de capturas de pantalla en caso de fallos.
+* tests ejecutados,
+* estado de cada test,
+* duración,
+* errores encontrados,
+* resumen de ejecución.
 
-Las capturas se guardan en:
+---
+
+## Screenshots automáticos
+
+El framework captura automáticamente una pantalla cuando una prueba UI falla.
+
+Las capturas se almacenan en:
 
 ```text
 reports/screenshots/
 ```
 
-## Casos automatizados
+El nombre de cada captura incluye el nombre del test y la fecha/hora de ejecución.
 
-### Login exitoso
+---
 
-Valida que el usuario `standard_user` pueda iniciar sesión correctamente con la contraseña `secret_sauce`.
+## Logging
 
-Validaciones principales:
+El proyecto implementa logging para registrar pasos clave durante la ejecución.
 
-- Redirección a `/inventory.html`.
-- Visualización del título `Products`.
-- Visualización del logo `Swag Labs`.
+Ruta del archivo de logs:
 
-### Catálogo de productos
+```text
+logs/suite.log
+```
 
-Valida que la pantalla de inventario cargue correctamente.
+El archivo registra eventos como:
 
-Validaciones principales:
+* inicio de pruebas,
+* login exitoso,
+* producto agregado al carrito,
+* checkout completado,
+* errores durante la ejecución.
 
-- Título de la pantalla.
-- Presencia de productos visibles.
-- Nombre y precio del primer producto.
-- Menú lateral visible.
-- Filtro de ordenamiento visible.
+---
 
-### Carrito de compras
+## Page Object Model
 
-Valida que se pueda agregar el primer producto del catálogo al carrito.
+El proyecto aplica el patrón Page Object Model.
 
-Validaciones principales:
+Las clases ubicadas en la carpeta `pages/` contienen:
 
-- Incremento del contador del carrito.
-- Navegación al carrito.
-- Visualización del producto agregado.
+* locators,
+* métodos de acción,
+* lógica de interacción con la UI.
+
+Los archivos ubicados en la carpeta `tests/` contienen:
+
+* casos de prueba,
+* asserts,
+* validaciones esperadas.
+
+Esta separación permite mejorar la mantenibilidad y reutilización del código.
+
+---
+
+## Markers configurados
+
+Los markers se encuentran configurados en `pytest.ini`.
+
+Markers disponibles:
+
+```text
+ui
+api
+smoke
+e2e
+```
+
+Ejemplo de uso:
+
+```bash
+pytest -m ui
+```
+
+---
+
+## Resultados actuales
+
+La ejecución completa del framework finaliza correctamente con:
+
+```text
+12 passed
+```
+
+Esto incluye pruebas UI, pruebas API, pruebas parametrizadas con CSV y un flujo E2E de checkout completo.
+
+---
+
+## Conclusión
+
+El framework desarrollado permite ejecutar pruebas automatizadas de UI y API de forma consistente, organizada y mantenible.
+
+La implementación de Page Object Model facilita la separación de responsabilidades, mientras que el uso de Pytest permite parametrizar pruebas, ejecutar por markers y generar reportes HTML.
+
+Además, el proyecto incluye manejo de datos externos mediante CSV, capturas automáticas ante fallos y logging para facilitar la depuración.
+
+El proyecto cumple con los requerimientos principales de la entrega final: pruebas UI, pruebas API, reportes, screenshots, logging, datos externos, parametrización, estructura organizada y documentación.

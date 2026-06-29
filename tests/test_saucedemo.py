@@ -1,5 +1,16 @@
-from selenium.webdriver.common.by import By
-from utils.helpers import login
+import pytest
+from pages import cart_page
+from pages.login_page import LoginPage
+from pages.inventory_page import InventoryPage
+from pages.cart_page import CartPage
+from utils.helpers import leer_csv_login
+from pages.checkout_page import CheckoutPage
+from utils.logger import obtener_logger
+
+pytestmark = pytest.mark.ui
+logger = obtener_logger()
+
+
 
 
 def test_login_exitoso(driver):
@@ -7,14 +18,18 @@ def test_login_exitoso(driver):
     Valida que el usuario pueda iniciar sesión correctamente
     y sea redirigido a la pantalla de inventario.
     """
-    login(driver)
 
-    title = driver.find_element(By.CLASS_NAME, "title").text
-    app_logo = driver.find_element(By.CLASS_NAME, "app_logo").text
+    logger.info("Iniciando test: login exitoso")
+
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
+
+    inventory_page = InventoryPage(driver)
 
     assert "/inventory.html" in driver.current_url
-    assert title == "Products"
-    assert app_logo == "Swag Labs"
+    assert inventory_page.obtener_titulo() == "Products"
+    assert inventory_page.obtener_logo() == "Swag Labs"
+
+    logger.info("Login exitoso validado correctamente")
 
 
 def test_catalogo_muestra_productos_y_elementos_importantes(driver):
@@ -22,57 +37,136 @@ def test_catalogo_muestra_productos_y_elementos_importantes(driver):
     Valida que el catálogo de productos cargue correctamente,
     mostrando título, productos visibles, menú y filtro.
     """
-    login(driver)
 
-    title = driver.find_element(By.CLASS_NAME, "title").text
-    productos = driver.find_elements(By.CSS_SELECTOR, "[data-test='inventory-item']")
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
 
-    assert title == "Products"
-    assert len(productos) > 0
+    inventory_page = InventoryPage(driver)
 
-    primer_producto = productos[0]
+    nombre_producto = inventory_page.obtener_nombre_primer_producto()
+    precio_producto = inventory_page.obtener_precio_primer_producto()
 
-    nombre_producto = primer_producto.find_element(By.CLASS_NAME, "inventory_item_name").text
-    precio_producto = primer_producto.find_element(By.CLASS_NAME, "inventory_item_price").text
-
+    assert inventory_page.obtener_titulo() == "Products"
+    assert inventory_page.obtener_cantidad_productos() > 0
     assert nombre_producto != ""
     assert precio_producto.startswith("$")
-
-    menu = driver.find_element(By.ID, "react-burger-menu-btn")
-    filtro = driver.find_element(By.CLASS_NAME, "product_sort_container")
-
-    assert menu.is_displayed()
-    assert filtro.is_displayed()
+    assert inventory_page.menu_esta_visible()
+    assert inventory_page.filtro_esta_visible()
 
     print(f"Primer producto listado: {nombre_producto} - Precio: {precio_producto}")
 
 
 def test_agregar_primer_producto_al_carrito(driver):
     """
-    Valida que se pueda agregar el primer producto del catálogo al carrito
-    y que el producto agregado aparezca correctamente en la pantalla del carrito.
+    Valida que se pueda agregar el producto Sauce Labs Backpack al carrito.
     """
-    login(driver)
 
-    productos = driver.find_elements(By.CSS_SELECTOR, "[data-test='inventory-item']")
-    assert len(productos) > 0
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
 
-    primer_producto = productos[0]
+    inventory_page = InventoryPage(driver)
+    inventory_page.agregar_producto_backpack()
 
-    nombre_producto = primer_producto.find_element(By.CLASS_NAME, "inventory_item_name").text
-    boton_agregar = primer_producto.find_element(By.CSS_SELECTOR, "button.btn_inventory")
+    assert inventory_page.obtener_cantidad_carrito() == "1"
+    assert inventory_page.obtener_nombre_producto_backpack() == "Sauce Labs Backpack"
 
-    boton_agregar.click()
+def test_producto_agregado_se_visualiza_en_carrito(driver):
+    """
+    Valida que un producto agregado desde el inventario
+    se visualice correctamente dentro del carrito.
+    """
 
-    contador_carrito = driver.find_element(By.CLASS_NAME, "shopping_cart_badge").text
-    assert contador_carrito == "1"
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
 
-    carrito = driver.find_element(By.CLASS_NAME, "shopping_cart_link")
-    carrito.click()
+    inventory_page = InventoryPage(driver)
+    inventory_page.agregar_producto_backpack()
+    inventory_page.ir_al_carrito()
 
-    productos_carrito = driver.find_elements(By.CLASS_NAME, "cart_item")
-    assert len(productos_carrito) == 1
+    cart_page = CartPage(driver)
 
-    nombre_producto_carrito = productos_carrito[0].find_element(By.CLASS_NAME, "inventory_item_name").text
+    assert "/cart.html" in driver.current_url
+    assert cart_page.obtener_titulo() == "Your Cart"
+    assert cart_page.obtener_cantidad_items() == 1
+    assert cart_page.obtener_nombre_producto() == "Sauce Labs Backpack"   
 
-    assert nombre_producto_carrito == nombre_producto
+def test_remover_producto_del_carrito(driver):
+    """
+    Valida que un producto agregado al carrito
+    pueda removerse correctamente.
+    """
+
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
+
+    inventory_page = InventoryPage(driver)
+    inventory_page.agregar_producto_backpack()
+    inventory_page.ir_al_carrito()
+
+    cart_page = CartPage(driver)
+
+    assert cart_page.obtener_cantidad_items() == 1
+
+    cart_page.remover_producto_backpack()
+
+    cart_page.esperar_carrito_vacio()
+
+    assert cart_page.obtener_cantidad_items() == 0
+
+    assert cart_page.obtener_cantidad_items() == 0  
+
+@pytest.mark.parametrize("usuario, clave, debe_funcionar", leer_csv_login())
+def test_login_parametrizado_desde_csv(driver, usuario, clave, debe_funcionar):
+    """
+    Valida el login con distintos usuarios obtenidos desde un archivo CSV.
+    Incluye casos positivos y negativos.
+    """
+
+    LoginPage(driver).abrir().login(usuario, clave)
+
+    if debe_funcionar:
+        assert "/inventory.html" in driver.current_url
+    else:
+        assert "/inventory.html" not in driver.current_url
+        assert LoginPage(driver).obtener_mensaje_error() != ""  
+
+@pytest.mark.e2e
+def test_checkout_completo(driver):
+    """
+    Valida el flujo completo de compra:
+    login, agregar producto al carrito, checkout y confirmación final.
+    """
+
+    logger.info("Iniciando test E2E: checkout completo")
+
+    LoginPage(driver).abrir().login("standard_user", "secret_sauce")
+
+    inventory_page = InventoryPage(driver)
+    inventory_page.agregar_producto_backpack()
+    inventory_page.ir_al_carrito()
+
+    logger.info("Producto agregado al carrito")
+
+    cart_page = CartPage(driver)
+
+    assert cart_page.obtener_titulo() == "Your Cart"
+    assert cart_page.obtener_cantidad_items() == 1
+
+    cart_page.ir_a_checkout()
+
+    checkout_page = CheckoutPage(driver)
+
+    assert checkout_page.obtener_titulo() == "Checkout: Your Information"
+
+    checkout_page.completar_datos_checkout(
+        "Alosmary",
+        "Hernandez",
+        "1000"
+    )
+
+    checkout_page.continuar()
+
+    assert checkout_page.obtener_titulo() == "Checkout: Overview"
+
+    checkout_page.finalizar_compra()
+
+    assert checkout_page.obtener_titulo() == "Checkout: Complete!"
+    assert checkout_page.obtener_mensaje_confirmacion() == "Thank you for your order!"
+
+    logger.info("Checkout completo finalizado correctamente")

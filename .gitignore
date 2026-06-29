@@ -1,0 +1,20 @@
+# Entorno virtual
+.venv/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Caché de pytest
+.pytest_cache/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs generados
+logs/suite.log
+
+# Evidencias generadas automáticamente
+reports/screenshots/
+reports/assets/
